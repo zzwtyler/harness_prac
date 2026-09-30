@@ -1,56 +1,54 @@
 # 示例业务项目：拾光咖啡
 
-> 这是为开发 Harness 而设定的虚构项目，不代表真实品牌、门店或政策。
+> **状态：虚构业务背景与未来场景设想；核对日期：2026-09-30。** 不代表真实品牌、门店或政策，不是当前能力清单。当前项目只提取当前输入并映射原文 Task；已实现范围见 [Product](PRODUCT.md)，运行流程见 [当前架构](ARCHITECTURE.md)。
 
 ## 行业与业务
 
-拾光咖啡是一家有三家门店的本地咖啡品牌，销售咖啡、茶饮和烘焙产品，提供到店消费、自取，以及面向公司活动的团体订单。顾客会通过网页发来咨询；店长也会向运营团队提出活动和销售分析需求。
+拾光咖啡是一家设想中的本地咖啡与茶饮品牌，有三家门店，销售咖啡、奶茶和烘焙产品，提供到店消费、自取，以及面向公司活动的团体订单。顾客可能发来咨询；店长也可能提出活动和销售分析需求。
 
-目前只有上述业务设定。门店地址、营业时间、菜单价格、库存、订单、会员规则和销售报表尚未接入。Harness 可以分析需求和生成草稿，但不能把缺失的数据当成已知事实。
+这些设定用于解释练习中的业务分类。门店地址、营业时间、菜单价格、配料、库存、订单、会员规则和销售报表均未接入。本文也不会作为模型的事实来源；当前 `project_context` 参数仅保留兼容接口。
 
-## Harness 参与的岗位
+## 当前练习中的 Harness
 
-**岗位：门店客服与运营助理。** 它是顾客消息和店长需求的第一道分流台：理解请求，判断主要 intent，收集办理所需的信息，再生成适合员工检查的业务产物。
+当前输入处理流程是：固定选项决策 → 按来源标注意图与字段 → Python 映射业务 Task → 结构与来源校验。
 
-工作流程：
+Stage 01 识别输入性质与路线，并为当前输入中的独立诉求组织子类型、原文依据和字段。Stage 02 只把这些原文片段映射到相应 Task，不生成新的业务分析或答复。多诉求保留各自 unit；纯问候、纯背景和目标不明分别处理，不能统称为 `other_request`。
 
-1. Stage 01 识别主要 intent，并提取目标、约束、关键缺失项和验收标准。
-2. 后续 Python Stage 根据 intent 生成不同结构的分析结果。
-3. 前端展示分析结果、依据和仍需员工确认的事项。
-4. 员工决定是否发送答复或执行订单、退款、活动发布等动作。
+`not_observed` 与 `verification_needed` 是待检查提示；目标不明时可返回固定澄清问题，但不维护跨轮补槽状态，也不会查询系统完成核实。可恢复的运行检查点只服务同一输入、配置和代码版本，不是顾客会话记忆。
 
-Harness 不直接承诺价格、库存、配送范围、预订成功或退款结果；这些信息需要接入数据源或经员工确认。
+## 未来岗位设想：门店客服与运营助理
 
-## 可以实现的 intent 与回答类型
+如果未来接入可靠业务数据、办理权限与人工审批，可以围绕以下工作流另行设计：理解需求，查询和核实办理信息，起草供员工检查的产物，再由员工决定是否答复或执行。**当前没有实现这些查询、草稿生成或业务动作。**
 
-下表的字段是**后续专用 Python 结果模型**的建议，不要求全部塞进 Stage 01 的通用 `UserIntentModel`。
+下表沿用业务 intent 名称，列出未来可能设计的产物。回答类型和建议字段是设计草案，不是当前 Python Task 的接口；已有 Task 的原文字段映射以源码和架构文档为准。
 
-| intent | 谁会提出、典型需求 | 建议回答类型 | 建议结果字段 |
+| intent | 业务场景 | 未来产物设想 | 尚需的数据或能力 |
 | --- | --- | --- | --- |
-| `store_info` | 顾客：“哪家店离我近？几点营业？” | `StoreInfoAnswer`：事实答复草稿 | `question`、`verified_facts`、`reply_draft`、`missing_facts` |
-| `menu_advice` | 顾客：“不喝奶，想要低甜度饮品。” | `MenuAdvice`：推荐分析 | `preferences`、`dietary_constraints`、`candidates`、`reasons`、`facts_to_verify` |
-| `order_support` | 顾客：“我想把自取时间改到下午。” | `OrderSupportCase`：订单处理单 | `order_id`、`requested_change`、`current_status`、`verification_needed`、`next_action` |
-| `group_order` | 顾客：“下周公司活动要 20 杯，能配送吗？” | `GroupOrderLead`：团体订单线索单 | `date`、`quantity`、`budget`、`pickup_or_delivery`、`missing_details`、`handoff_action` |
-| `complaint` | 顾客：“上次拿到的饮品做错了。” | `ComplaintCase`：客诉分级单 | `issue`、`impact`、`evidence_needed`、`urgency`、`reply_draft`、`escalation` |
-| `membership_help` | 顾客：“积分为什么没到账？” | `MembershipAnswer`：规则与账户核查单 | `question`、`account_lookup_needed`、`policy_basis`、`reply_draft`、`missing_facts` |
-| `campaign_brief` | 店长：“下个月做工作日早餐活动。” | `CampaignBrief`：活动策划简报 | `objective`、`audience`、`offer_assumptions`、`channels`、`assets_needed`、`approval_items` |
-| `sales_analysis` | 店长：“比较上周三家店的销量。” | `SalesAnalysis`：经营分析简报 | `period`、`metrics`、`comparisons`、`findings`、`data_gaps`、`follow_up` |
-| `multi_intent` | 顾客同时要求改订单和投诉服务 | `SplitRequest`：拆分与路由清单 | `subrequests`、`intent_for_each`、`priority`、`shared_context` |
-| `other_request` | 与以上范围无关或暂时无法识别 | `TriageNote`：澄清或转人工记录 | `summary`、`reason_unclassified`、`clarifying_question`、`handoff_target` |
+| `store_info` | 顾客问最近的门店与营业时间 | `StoreInfoAnswer`：已核实事实、答复草稿、缺失事实 | 门店目录、位置与营业时间查询 |
+| `menu_advice` | 顾客请求低甜度或无奶饮品推荐 | `MenuAdvice`：候选饮品、推荐理由、待核实配料 | 菜单、价格、配料及过敏原信息 |
+| `order_support` | 顾客查询、修改或取消已有订单 | `OrderSupportCase`：订单状态、拟采取的动作、核验事项 | 订单查询、身份及办理权限、修改或取消接口 |
+| `group_order` | 公司活动需要多杯饮品 | `GroupOrderLead`：待确认信息、供员工跟进的线索单 | 库存、产能、配送范围与报价能力 |
+| `complaint` | 顾客投诉饮品或服务 | `ComplaintCase`：影响评估、证据需求、答复草稿、升级建议 | 客诉处理规则、核查和转人工渠道 |
+| `membership_help` | 顾客咨询积分或会员权益 | `MembershipAnswer`：账户核查、规则依据、答复草稿 | 账户记录、会员政策与授权查询 |
+| `campaign_brief` | 店长请求营销活动策划 | `CampaignBrief`：活动方案、资源计划、审批事项 | 预算与资源事实、方案生成及审批流程 |
+| `sales_analysis` | 店长请求销售比较或汇总 | `SalesAnalysis`：计算结果、发现、数据缺口 | 销售报表、计算与分析能力 |
+| `multi_intent` | 同时要求订单操作与会员核查 | 多事项处理清单：每项进度、优先级、交接信息 | 跨事项工作流与状态管理；当前只保留独立 unit |
+| `other_request` | 有明确目标，但不属于以上业务 | 澄清或转人工记录 | 范围外事项的处理规则与交接渠道 |
 
-## 供 Stage 01 测试的输入
+## 输入场景与当前输出边界
 
-| 输入 | 期望 intent | 后续产物 |
+| 场景 | 当前练习处理 | 未来业务环节 |
 | --- | --- | --- |
-| “下周六公司活动需要 20 杯咖啡，预算 500 元，怎么订？” | `group_order` | 团体订单线索单；缺少地点、取货或配送方式时列为待确认。 |
-| “不喝奶，想点不太甜的，推荐什么？” | `menu_advice` | 推荐分析；菜单和配料未接入时，不编造具体产品。 |
-| “订单 123 的自取时间想改到 15 点。” | `order_support` | 订单处理单；先核查订单状态，不声称已经修改。 |
-| “上周三家门店哪家销售下降最多？” | `sales_analysis` | 经营分析简报；报表缺失时标记无法计算的指标。 |
-| “积分没到，顺便帮我把订单取消。” | `multi_intent` | 拆成会员与订单两个子请求。 |
+| 公司活动订饮品，并给出数量、预算和日期 | 识别 `group_order`，标注当前原文中的相关字段 | 核实产能、补充交付信息、报价和下单 |
+| 提出忌口条件并请求饮品推荐 | 识别 `menu_advice`，保留推荐请求和饮食条件 | 查询真实菜单并生成推荐 |
+| 给出订单编号并要求改自取时间 | 识别 `order_support`，保留编号及变更原文 | 验证订单后办理修改 |
+| 请求比较门店销量 | 识别 `sales_analysis`，保留期间、指标或比较要求 | 读取报表并计算，不凭请求生成销量结论 |
+| 同时报告积分异常并要求取消订单 | 识别 `multi_intent`，保留会员与订单两个 unit 的归属 | 各自查询、核实与办理 |
 
-## 写后续 Python Stage 时的边界
+这些场景说明业务含义，不保证模型每次都正确分类。原文一致和 Schema 合法不代表语义正确，也不代表业务事实已核实。
 
-- Stage 01 只做分流和通用任务归一化；业务回答由专用 Stage 负责。
-- 每个专用 Stage 定义自己的 dataclass/JSON Schema。事实答复、处理单、推荐和分析简报需要不同字段。
-- 结构化结果区分**已核实事实**、**合理假设**与**待查询数据**。缺少真实数据时仍可产出有用的处理单或答复草稿，但不能生成虚假的业务结论。
-- 首批适合实现 `group_order`、`order_support`、`sales_analysis`：它们分别练习信息收集、状态核查和数据分析，结果结构差异明显。
+## 后续扩展边界
+
+新业务执行或生成阶段必须作为独立能力设计，不能把当前原文提取协议改成自由补全。未来若引入已核实事实、假设、草稿或外部数据，应分别建模并保留来源，明确它们不是用户原话。
+
+当前不承诺价格、库存、配送范围、预订成功或退款结果。无真实数据和办理能力时，只保留用户提供的信息及待核验提示。

@@ -12,7 +12,7 @@
 
 - **Tev1 决策**：`tev1:4b` 只选择 A–M 的一个字母，Python 映射为输入性质、ask/infer 和业务路线。
 - **Qwen3.5 标注**：`qwen3.5:4b` 选择原文片段 ID 和字段类别。单业务不能改决策路线；多个独立目标按 unit 保存，同业务的独立目标也可并存。
-- **Qwen3:8b 级联**：默认启用。低决策 confidence、缺少有效 confidence metadata，或主流程结构、来源、目标数量、request 校验失败时，由 `qwen3:8b` 重新决策并提取；最多升级一次。
+- **Qwen3:8b 级联**：默认启用。低决策 confidence、缺少有效 confidence metadata、决策协议无效，或主流程结构、来源、目标数量、request 校验失败时，由 `qwen3:8b` 重新决策并提取；最多升级一次。
 - **来源校验**：Python 复制模型明确选择的原文，检查 Schema、范围和 unit 归属。每个已宣称目标必须明确选择 request 来源；不会靠语义正则自动补标签。
 - **Context 与 Task**：按目标保留来源、信息、缺项和核验提示，再生成对应业务类型的 Task。`ready` 仅表示结构可消费。
 
@@ -111,4 +111,15 @@ python3 -m unittest discover -s tests -v
 
 测试使用 mock 覆盖模型角色、来源范围、有界重试、级联、人工核验和检查点恢复，不等同于真实模型语义验收。
 
-完整模块说明、协议字段和恢复机制见 [架构与协议文档](docs/ARCHITECTURE.md)。主要代码位于 `core/`，完整执行入口在 `harness/`，单元测试在 `tests/`。
+文档已按 2026-09-30 的当前代码核对。当前实现说明与历史开发记录分别标注，历史实验成绩不代表当前版本的准确率。
+
+| 文档 | 内容与状态 |
+| --- | --- |
+| [架构与协议](docs/ARCHITECTURE.md) | 当前模型分工、来源标注、人工核验、输出与恢复协议 |
+| [项目范围](docs/PRODUCT.md) | 当前练习目标、已实现能力及限制 |
+| [业务背景](docs/PROJECT_BRIEF.md) | 虚构业务场景，区分当前提取能力与后续设想 |
+| [双模型调试计划](docs/DUAL_MODEL_DEBUG_PLAN.md) | 历史开发计划，注明后续级联与当前状态 |
+| [Confidence 级联计划](docs/CONFIDENCE_CASCADE_PLAN.md) | 历史开发记录与当前核验政策 |
+| [模型适配实验记录](docs/model_compatibility_sources_2026-09-30.md) | 接入前实验及环境记录，供历史比较 |
+
+主要代码位于 `core/`，完整执行入口在 `harness/`，单元测试在 `tests/`。

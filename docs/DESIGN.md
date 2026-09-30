@@ -143,7 +143,19 @@ components:
     padding: "28px"
 ---
 
-# Design System: 任务清样
+# Design System: 任务清样（历史界面设计资料）
+
+> **状态：历史视觉与交互设计记录，不是当前运行规范；状态核对日期：2026-09-30。** 本次仅核对档案分类，不意味着视觉实现已核验。 以下色彩、字体、布局、组件和交互描述保留早期工作台方案；不表示这些界面行为或后端能力当前全部存在。本次文档维护不实现或修改界面。当前能力见 [Product](PRODUCT.md)，后端流程以 [当前架构](ARCHITECTURE.md) 为准，使用入口见 [README](../README.md)。
+
+## 与当前实现的区别
+
+- 文中的 thinking panel、streamed reasoning 和思考流状态是历史方案。当前提取流程不返回或保存模型思考流；启用模型内部思考也不改变这一边界。
+- 文中的 four-field result、generated goal、constraints、unknowns 和 acceptance rows 指早期结果布局，不是当前 Task Schema。当前输出是带来源片段的意图 unit、信息层、业务 Task、校验与决策审计信息。
+- project-background strip 和可编辑提示控件属于界面设想或历史交互；项目背景不进入当前提取模型，不提供事实，也不覆盖固定决策与标注协议。
+- waiting、thinking、output 等视觉状态不代表后端正在查询业务系统或办理事项。当前没有业务执行、草稿生成、外部检索、长期记忆或跨轮会话状态。
+- 本文不规定默认模型。当前角色配置见 [执行配置源码](../core/14_execution_config.py)，避免把历史单模型工作台设计当成现有决策、标注与级联流程。
+
+后续各节均按历史设计资料阅读；保留其中的视觉原则不构成恢复旧能力的要求。
 
 ## Overview
 

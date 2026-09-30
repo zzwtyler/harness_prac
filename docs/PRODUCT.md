@@ -1,57 +1,47 @@
-# Product
+# Product：原文意图提取练习项目
 
-> **Historical design record.** The sections below preserve the earlier workbench design and are not the current runtime specification. Current behavior is defined by [README.md](../README.md): source-only extraction with Tev1 fixed-letter decisions, Qwen3.5 structured annotation, and isolated per-unit context. Thinking streams are not returned or saved; editable prompts and project background cannot override the extraction protocol or supply facts. Business operations are not executed.
+> **状态：当前范围说明；核对日期：2026-09-30。** 本项目练习从当前用户输入中识别意图、标注原文并生成结构化 Task。运行流程以 [当前架构](ARCHITECTURE.md) 为准，使用入口见 [README](../README.md)。[业务背景](PROJECT_BRIEF.md) 中的答复草稿、查询和业务办理属于未来场景设想。
 
-<!-- impeccable:product-schema 1 -->
+## 用户与用途
 
-## Platform
+面向在本机学习和调试 Harness 的开发者。开发者输入一段中文请求，检查输入性质、独立诉求、业务类型、原文归属及 Task 映射，定位模型误判和结构错误。
 
-web
+项目目前是提取与校验练习，不是已接入真实门店系统的客服或运营代理。输出中的 `Task` 是由原文片段组成的数据结构，不表示任务已经执行。
 
-## Stack
+## 当前流程
 
-Assumption from the current brief and empty project: a dependency-free Python 3.10 server with a native HTML/CSS/JavaScript frontend, talking to the local Ollama HTTP API. The choice is intentionally easy to run locally and remains open to change if a framework is later preferred.
+1. 准备当前输入和带位置的原文片段。超出输入预算时拒绝处理，不静默截断或补全。
+2. 决策模型从固定字母选项中选择输入性质和路线；纯问候、纯背景和目标不明不凭空变成业务诉求。
+3. 对有诉求的输入，标注模型输出独立 unit、子类型、原文片段引用及字段标签。Python 根据引用复制原文，不让模型改写字段事实。
+4. Python 组织每个 unit 的信息层、待确认提示和业务 Task，校验来源、结构、归属和映射。
+5. 返回结构化结果、决策 confidence、级联记录与人工核验标记；指定结果目录时可保存运行状态和检查点。
 
-## Users
+默认角色为 `tev1:4b` 决策、`qwen3.5:4b` 标注、`qwen3:8b` 级联重审。级联默认开启：初次决策概率低于 0.8、概率元数据不可用、决策无效或标注校验失败时，可转入后备模型重新决策和提取，并保留审计信息。完整默认值及预算以 [执行配置源码](../core/14_execution_config.py) 为准。
 
-Primary user: a developer building a multi-stage Harness locally with Qwen through Ollama who wants to inspect each transformation from raw request to later execution artifacts.
+`confidence` 是所选决策字母 token 的概率，未经正确率校准，也不是所有字段正确的概率。结构校验通过仍返回 `semantic_verification: not_performed`；`not_observed` 是未观察到字段的提示，不证明用户没有提供或业务数据不存在。
 
-## Product Purpose
+## 支持与不支持的能力
 
-Run any numbered Harness Stage through one inspectable workbench. Each Python Stage supplies its own prompt, JSON schema, labels, and examples while the page exposes the model's separate thinking stream and final structured output. Success means a developer can edit or add a Stage without duplicating its contract in the web layer.
+| 范围 | 当前行为 |
+| --- | --- |
+| 意图与字段 | 识别当前输入的单个或多个诉求，保留每个 unit 的来源片段、标签和信息归属；Task 只映射提取结果。 |
+| 模型与重试 | 调用本机 Ollama，使用固定决策协议与结构化标注 Schema；支持有界重试、级联及失败记录。 |
+| 保存与恢复 | 可保存本次运行 JSON，并显式恢复输入、配置和代码指纹一致的检查点。 |
+| 对话与记忆 | 目标不明时可返回固定澄清问题；不合并历史对话，不维护跨轮槽位或长期用户记忆。检查点恢复不是多轮会话状态。 |
+| 项目背景 | `project_context` 仅保留兼容入口，不作为模型输入或提取事实来源。 |
+| 信息查询 | 没有接入门店、菜单、订单、会员或销售数据；不会联网检索或核实业务事实。 |
+| 业务产物与操作 | 不生成客服答复、商品推荐或活动方案草稿；不下单、修改订单、退款、发消息或发布活动。 |
+| 模型思考 | 可配置模型内部思考，但当前提取结果和保存产物不返回或保存思考流。 |
 
-## Positioning
+## 运行边界与事实依据
 
-The interface is an inspectable Harness workbench rather than a general chat client: it keeps Stage selection, reasoning trace, raw structured response, and schema-driven parsed fields visibly distinct.
+当前模型工具只允许来源选择和决策。模型地址限定为本机 HTTP Ollama；应用能力白名单不包含业务 CRUD、网页检索或 shell 执行。此白名单是应用约束，不是操作系统沙箱。
 
-## Operating Context
+- [提取流程](../core/08_extraction.py)：决策、标注、级联及来源复制。
+- [上下文](../core/03_context.py)：只接受当前输入，构建带独立 unit 的输出上下文。
+- [Task 映射](../core/02_task.py)：不再调用模型，不增加事实。
+- [校验](../core/10_verification.py)：结构与来源校验，不宣称语义核实。
+- [Harness 入口](../harness/main.py)：结果保存、代码配置指纹及显式检查点恢复。
+- [权限边界](../core/13_permissions.py)：本机地址与应用能力限制。
 
-The app runs on a developer's machine beside Ollama. The expected model is `qwen3:4b`, served by the default local Ollama endpoint. Requests are primarily written in Chinese.
-
-## Capabilities and Constraints
-
-- Stream Qwen thinking and final answer separately.
-- Discover numbered Python Stage Modules through a shared Interface and hot-reload their definitions.
-- Require each final answer to follow its Stage's JSON schema.
-- Let the user inspect and edit the Chinese system prompt and model name.
-- Let the user keep an editable project background across Stage runs, with a concrete fictional café-service example and browser-local persistence.
-- Report Ollama connection and model errors with a recovery action.
-- No external Python packages are assumed to be installed.
-- Assumption: this is a single-user local tool; authentication and remote deployment are not in scope.
-
-## Evidence on Hand
-
-- `core/01_user_intent.py` classifies source text into types in `core/01_user_intent_classes/`; `core/02_task.py` maps these into task types in `core/02_task_classes/`.
-- Web-specific Stage metadata lives in `web/stages/` Adapters, keeping future numbered task Modules readable.
-- No existing interface, brand assets, customer proof, or deployment configuration exists. Future work must not invent these.
-
-## Product Principles
-
-- Make model state legible: waiting, thinking, answering, done, and failed are visibly different.
-- Preserve inspectability: never merge reasoning and final output into one undifferentiated block.
-- Prefer precise task language over conversational decoration.
-- Keep the local setup small and reversible.
-
-## Accessibility & Inclusion
-
-The interface should be keyboard operable, responsive, and use Chinese-first labels with clear focus and status feedback.
+历史界面方案另存于 [DESIGN.md](DESIGN.md)，不定义当前提取协议或后端能力。
