@@ -1,0 +1,68 @@
+[
+  {
+    "id": "group_order",
+    "order": 2,
+    "title": "团体订单线索单",
+    "model": "GroupOrderLead"
+  },
+  {
+    "id": "order_support",
+    "order": 3,
+    "title": "订单处理单",
+    "model": "OrderSupportCase"
+  },
+  {
+    "id": "sales_analysis",
+    "order": 4,
+    "title": "经营分析简报",
+    "model": "SalesAnalysis"
+  },
+  {
+    "id": "store_info",
+    "order": 5,
+    "title": "门店事实答复草稿",
+    "model": "StoreInfoAnswer"
+  },
+  {
+    "id": "menu_advice",
+    "order": 6,
+    "title": "饮品推荐分析",
+    "model": "MenuAdvice"
+  },
+  {
+    "id": "complaint",
+    "order": 7,
+    "title": "客诉分级单",
+    "model": "ComplaintCase"
+  },
+  {
+    "id": "membership_help",
+    "order": 8,
+    "title": "会员核查单",
+    "model": "MembershipAnswer"
+  },
+  {
+    "id": "campaign_brief",
+    "order": 9,
+    "title": "活动策划简报",
+    "model": "CampaignBrief"
+  },
+  {
+    "id": "multi_intent",
+    "order": 10,
+    "title": "拆分与路由清单",
+    "model": "SplitRequest"
+  },
+  {
+    "id": "other_request",
+    "order": 11,
+    "title": "澄清或转人工记录",
+    "model": "TriageNote"
+  },
+  {
+    "id": "no_intent",
+    "order": 12,
+    "title": "无当前业务诉求",
+    "model": "NoIntentTask"
+  }
+]

@@ -1,0 +1,240 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta
+      name="description"
+      content="使用本地 Qwen 模型，把自然语言请求整理成可执行任务。"
+    />
+    <title>Harness 清样 · Qwen Workbench</title>
+    <link rel="stylesheet" href="/static/style.css" />
+  </head>
+  <body>
+    <a class="skip-link" href="#task-input">跳到任务输入</a>
+
+    <div class="app-shell">
+      <aside class="settings-rail" aria-label="模型设置">
+        <div class="brand-lockup">
+          <span class="brand-mark" aria-hidden="true">任</span>
+          <div>
+            <p class="brand-name">Harness 清样</p>
+            <p class="brand-version">LOCAL / QWEN</p>
+          </div>
+        </div>
+
+        <div class="connection-block">
+          <div class="connection-line">
+            <span class="status-dot is-checking" id="status-dot" aria-hidden="true"></span>
+            <span id="connection-status">正在检查 Ollama…</span>
+          </div>
+          <button class="text-button" id="retry-status" type="button">重新检测</button>
+        </div>
+
+        <button
+          class="mobile-settings-button"
+          id="mobile-settings-button"
+          type="button"
+          aria-expanded="false"
+          aria-controls="settings-form"
+        >
+          模型与 System content 设置
+          <span class="disclosure-icon" aria-hidden="true"></span>
+        </button>
+
+        <div class="settings-form" id="settings-form">
+          <label class="field-label" for="stage-select">Harness stage</label>
+          <select id="stage-select" name="stage">
+            <option value="">正在读取 stages…</option>
+          </select>
+          <p class="stage-description" id="stage-description"></p>
+
+          <label class="field-label" for="decision-model-select">决策模型</label>
+          <select id="decision-model-select" name="decision-model">
+            <option value="tev1:4b">tev1:4b</option>
+          </select>
+
+          <label class="field-label" for="model-select">详情标注模型</label>
+          <select id="model-select" name="model">
+            <option value="qwen3.5:4b">qwen3.5:4b</option>
+          </select>
+
+          <label class="field-label" for="fallback-model-select">低置信度重审模型</label>
+          <select id="fallback-model-select" name="fallback-model">
+            <option value="qwen3:8b">qwen3:8b</option>
+          </select>
+          <label class="field-label" for="confidence-threshold">决策 token 概率阈值（非校准正确率）</label>
+          <input id="confidence-threshold" type="number" min="0" max="1" step="0.01" value="0.8" />
+          <label class="switch-row" for="cascade-enabled">
+            <span><strong>低分或校验失败自动重审</strong><small>仅提取原文，不执行业务</small></span>
+            <span class="switch-control"><input id="cascade-enabled" type="checkbox" checked /><span class="switch-track" aria-hidden="true"></span></span>
+          </label>
+
+          <div class="setting-heading">
+            <label class="field-label" for="system-prompt">System content</label>
+            <button class="text-button" id="reset-prompt" type="button">恢复默认</button>
+          </div>
+          <textarea
+            class="system-prompt"
+            id="system-prompt"
+            rows="12"
+            spellcheck="false"
+          ></textarea>
+
+          <label class="switch-row" for="thinking-toggle">
+            <span>
+              <strong>展示模型思考</strong>
+              <small>读取 message.thinking</small>
+            </span>
+            <span class="switch-control">
+              <input id="thinking-toggle" type="checkbox" checked />
+              <span class="switch-track" aria-hidden="true"></span>
+            </span>
+          </label>
+        </div>
+
+        <p class="rail-note">
+          数据只在浏览器、本地 Python 服务与 Ollama 之间传递。
+        </p>
+      </aside>
+
+      <main class="workbench">
+        <header class="page-header">
+          <div>
+            <h1 id="page-headline">让 Harness 先读懂，<br />再开始执行。</h1>
+            <p id="page-intro">正在加载 Harness stage…</p>
+          </div>
+          <div class="schema-stamp" aria-label="输出结构">
+            <span>OUTPUT SCHEMA</span>
+            <strong id="schema-count">— FIELDS</strong>
+          </div>
+        </header>
+
+        <details class="project-context">
+          <summary class="context-summary">
+            <span class="context-summary-title">项目背景</span>
+            <span id="context-preview">正在载入背景…</span>
+            <span class="context-summary-action" aria-hidden="true">查看与编辑</span>
+          </summary>
+          <div class="context-editor">
+            <div class="context-heading">
+              <p>作为当前 Stage 的上下文随任务发送；编辑后仅保存在这个浏览器中。</p>
+              <button class="text-button" id="restore-context" type="button">恢复示例背景</button>
+            </div>
+            <label class="visually-hidden" for="project-context-input">项目背景内容</label>
+            <textarea id="project-context-input" rows="5" maxlength="8000" aria-describedby="project-context-hint"></textarea>
+            <div class="context-footer">
+              <span id="project-context-hint">写清行业、岗位、客户需求和数据边界；留空则只发送当前任务。</span>
+              <span id="context-count">0 / 8,000</span>
+            </div>
+          </div>
+        </details>
+
+        <section class="composer" aria-labelledby="composer-title">
+          <div class="composer-meta">
+            <h2 id="composer-title">阶段输入</h2>
+            <span id="character-count">0 / 20,000</span>
+          </div>
+          <textarea
+            id="task-input"
+            rows="5"
+            maxlength="20000"
+            placeholder="正在加载当前阶段…"
+          ></textarea>
+          <div class="composer-actions">
+            <div class="example-actions" aria-label="示例任务">
+              <span>试一条：</span>
+              <span id="example-buttons"></span>
+            </div>
+            <button class="primary-action" id="submit-button" type="button" disabled>
+              <span class="button-label">运行当前阶段</span>
+              <span class="button-key">⌘ ↵</span>
+            </button>
+          </div>
+        </section>
+
+        <nav class="process-track" aria-label="生成进度">
+          <div class="process-step is-active" data-step="input">
+            <span>1</span>
+            <strong>已接收</strong>
+          </div>
+          <div class="process-step" data-step="thinking">
+            <span>2</span>
+            <strong>模型思考</strong>
+          </div>
+          <div class="process-step" data-step="output">
+            <span>3</span>
+            <strong>结构化输出</strong>
+          </div>
+          <span class="process-fill" id="process-fill" aria-hidden="true"></span>
+        </nav>
+
+        <div class="notice is-hidden" id="error-notice" role="alert">
+          <strong>这次没有生成成功</strong>
+          <p id="error-message"></p>
+        </div>
+
+        <section class="proof-grid" aria-label="模型生成结果">
+          <aside class="thinking-panel">
+            <div class="panel-heading">
+              <div>
+                <h2>思考批注</h2>
+            <p id="thinking-status" role="status" aria-live="polite">等待任务</p>
+              </div>
+              <span class="live-indicator" id="thinking-live" aria-hidden="true"></span>
+            </div>
+            <div class="thinking-empty" id="thinking-empty">
+              <span aria-hidden="true">∴</span>
+              <p>模型的 reasoning tokens 会在这里逐段出现，并与最终答案保持分离。</p>
+            </div>
+            <pre id="thinking-output" aria-live="polite"></pre>
+          </aside>
+
+          <section class="result-panel">
+            <div class="panel-heading result-heading">
+              <div>
+                <h2 id="output-title">结构化清样</h2>
+                <p id="result-status" role="status" aria-live="polite">等待结构化输出</p>
+              </div>
+              <div class="result-actions">
+                <button class="secondary-action" id="clear-button" type="button">清空</button>
+                <button class="secondary-action" id="copy-button" type="button" disabled>
+                  复制 JSON
+                </button>
+              </div>
+            </div>
+
+            <div class="result-empty" id="result-empty">
+              <div class="empty-grid" aria-hidden="true">
+                <span></span><span></span><span></span><span></span>
+              </div>
+              <p id="result-empty-copy">生成完成后，当前 Stage 的结构化字段会在这里组成一张可检查的清样。</p>
+            </div>
+
+            <div class="streaming-output is-hidden" id="streaming-output">
+              <span>正在接收 JSON</span>
+              <pre id="raw-stream"></pre>
+            </div>
+
+            <div class="structured-result is-hidden" id="structured-result">
+              <div class="structured-fields" id="structured-fields"></div>
+
+              <details class="raw-details">
+                <summary>查看原始 JSON</summary>
+                <pre id="raw-output"></pre>
+              </details>
+            </div>
+          </section>
+        </section>
+
+        <footer class="page-footer">
+          <span>LOCAL WORKBENCH</span>
+          <span id="metrics-output">尚未生成</span>
+        </footer>
+      </main>
+    </div>
+
+    <div class="toast" id="toast" role="status" aria-live="polite"></div>
+    <script src="/static/app.js" defer></script>
+  </body>
+</html>

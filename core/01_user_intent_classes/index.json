@@ -1,0 +1,46 @@
+[
+  {
+    "id": "group_order",
+    "model": "GroupOrderIntent"
+  },
+  {
+    "id": "order_support",
+    "model": "OrderSupportIntent"
+  },
+  {
+    "id": "sales_analysis",
+    "model": "SalesAnalysisIntent"
+  },
+  {
+    "id": "store_info",
+    "model": "StoreInfoIntent"
+  },
+  {
+    "id": "menu_advice",
+    "model": "MenuAdviceIntent"
+  },
+  {
+    "id": "complaint",
+    "model": "ComplaintIntent"
+  },
+  {
+    "id": "membership_help",
+    "model": "MembershipHelpIntent"
+  },
+  {
+    "id": "campaign_brief",
+    "model": "CampaignBriefIntent"
+  },
+  {
+    "id": "multi_intent",
+    "model": "MultiIntentIntent"
+  },
+  {
+    "id": "other_request",
+    "model": "OtherRequestIntent"
+  },
+  {
+    "id": "no_intent",
+    "model": "NoIntent"
+  }
+]

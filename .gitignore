@@ -1,0 +1,32 @@
+# Local requests, model responses, evaluation records and snapshots
+/outputs/
+/private-evaluations/
+
+# Python environments and generated files
+/.venv/
+/venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+*.egg-info/
+/build/
+/dist/
+
+# Credentials and machine-specific settings
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+/credentials.json
+
+# Editor, OS and local design-tool state
+/.idea/
+/.vscode/
+/.impeccable/
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
