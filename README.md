@@ -1,6 +1,6 @@
-# harness_prac · 本地原文提取 Harness
+# harness_prac · 本地原文提取 Harness 练习项目
 
-一个使用本地小模型的结构化提取项目：从当前用户原文判断意图、标注来源片段，再整理成带审计信息的 JSON 和 Task。适用于业务请求的分类与信息交接，不生成业务事实、默认值或经营结论，也不执行下单、退款、发布等操作。
+这是一个用于学习与实验的练习项目，使用本地小模型从当前用户原文判断意图、标注来源片段，再整理成带审计信息的 JSON 和 Task。用于探索业务请求的分类与信息交接，不生成业务事实、默认值或经营结论，也不执行下单、退款、发布等操作。
 
 ## 工作流程
 
@@ -58,16 +58,6 @@ python3 -m harness.main '当前用户原文' --output outputs/demo --resume
 
 检查点通过输入、角色模型、阈值、执行代码指纹及内容摘要校验；不一致时拒绝恢复。已有有效提取检查点可复用，不再次调用模型。
 
-### Web
-
-```bash
-python3 -m web.main
-```
-
-打开 <http://127.0.0.1:8000>。页面可选择模型角色、confidence 阈值和级联开关；缺少某个启用的角色模型时禁用执行，需明确选择替代模型。
-
-Web 和独立 Stage 返回对应的 typed result，包含 confidence、级联审计和人工核验标志。完整的 decision/context 交接 envelope 使用 CLI 或下面的 Python 入口。
-
 ### Python
 
 ```python
@@ -121,6 +111,4 @@ python3 -m unittest discover -s tests -v
 
 测试使用 mock 覆盖模型角色、来源范围、有界重试、级联、人工核验和检查点恢复，不等同于真实模型语义验收。
 
-可选的网页脚本测试需要 Node.js；未安装时这部分测试会跳过，不影响 Python 服务运行。
-
-完整模块说明、协议字段和恢复机制见 [架构与协议文档](docs/ARCHITECTURE.md)。主要代码位于 `core/`，完整执行入口在 `harness/`，网页在 `web/`，单元测试在 `tests/`。
+完整模块说明、协议字段和恢复机制见 [架构与协议文档](docs/ARCHITECTURE.md)。主要代码位于 `core/`，完整执行入口在 `harness/`，单元测试在 `tests/`。
